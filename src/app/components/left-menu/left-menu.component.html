@@ -1,45 +1,25 @@
 <div
-  class="w-44 bg-slate-950/60 border border-slate-800 rounded-lg p-2.5 flex flex-col space-y-1 text-xs shrink-0"
+  class="w-44 bg-slate-950/60 border border-slate-800 rounded-lg p-2.5 flex flex-col space-y-1 text-xs shrink-0 font-mono"
 >
   <div
     class="text-[10px] text-slate-500 font-semibold px-2 py-1 uppercase tracking-wider"
   >
-    Security Groups
+    Service Navigation
   </div>
-  <a
-    href="javascript:void(0)"
-    (click)="menuSelected.emit('Inbound Rules')"
-    class="px-2.5 py-1.5 rounded text-cyan-300 bg-cyan-950/40 border border-cyan-500/30 font-medium"
-    >Inbound Rules</a
-  >
-  <a
-    href="javascript:void(0)"
-    (click)="menuSelected.emit('Outbound Rules')"
-    class="px-2.5 py-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition"
-    >Outbound Rules</a
-  >
-  <a
-    href="javascript:void(0)"
-    (click)="menuSelected.emit('Tags')"
-    class="px-2.5 py-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition"
-    >Tags</a
-  >
 
-  <div
-    class="text-[10px] text-slate-500 font-semibold px-2 pt-3 pb-1 uppercase tracking-wider"
-  >
-    Configuration
-  </div>
-  <a
-    href="javascript:void(0)"
-    (click)="menuSelected.emit('Details')"
-    class="px-2.5 py-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition"
-    >Details</a
-  >
-  <a
-    href="javascript:void(0)"
-    (click)="menuSelected.emit('Network Interfaces')"
-    class="px-2.5 py-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition"
-    >Network Interfaces</a
-  >
+  @for (menu of menus; track menu) {
+    <a
+      href="javascript:void(0)"
+      (click)="selectMenu(menu)"
+      [class]="
+        selectedMenu === menu
+          ? 'px-2.5 py-1.5 rounded text-cyan-300 bg-cyan-950/40 border border-cyan-500/30 font-medium'
+          : 'px-2.5 py-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition'
+      "
+    >
+      {{ menu }}
+    </a>
+  } @empty {
+    <div class="px-2 py-2 text-[11px] text-slate-600">No menus available</div>
+  }
 </div>

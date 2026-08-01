@@ -11,9 +11,15 @@
   </app-navbar>
 
   <!-- Main Body Layout -->
-  <div class="flex flex-1 gap-4 overflow-hidden">
-    <app-left-menu (menuSelected)="activeHeaderTitle = $event"></app-left-menu>
+  <div class="flex flex-1 gap-4 overflow-hidden pt-4">
+    <app-left-menu
+      [menus]="currentService.menus"
+      [selectedMenu]="activeMenu"
+      (menuSelected)="onMenuSelected($event)"
+    >
+    </app-left-menu>
     <app-main-content
+      class="flex-1 min-w-0"
       [currentServiceTitle]="activeHeaderTitle"
     ></app-main-content>
   </div>
