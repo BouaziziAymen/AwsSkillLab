@@ -1,0 +1,20 @@
+<div
+  class="bg-slate-900/80 border border-cyan-500/40 rounded-xl p-5 shadow-[0_0_20px_rgba(6,182,212,0.05)] flex flex-col h-full font-mono"
+>
+  <!-- Navbar Component wrapping Service & Region Selectors -->
+  <app-navbar
+    [selectedService]="selectedService"
+    [selectedRegion]="selectedRegion"
+    (serviceChange)="selectedService = $event; onServiceChange()"
+    (regionChange)="selectedRegion = $event"
+  >
+  </app-navbar>
+
+  <!-- Main Body Layout -->
+  <div class="flex flex-1 gap-4 overflow-hidden">
+    <app-left-menu (menuSelected)="activeHeaderTitle = $event"></app-left-menu>
+    <app-main-content
+      [currentServiceTitle]="activeHeaderTitle"
+    ></app-main-content>
+  </div>
+</div>

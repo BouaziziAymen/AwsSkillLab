@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ConsolePanelComponent } from './console-panel.component';
+import { LeftMenuComponent } from './left-menu.component';
 
-describe('ConsolePanelComponent', () => {
-  let component: ConsolePanelComponent;
-  let fixture: ComponentFixture<ConsolePanelComponent>;
+describe('LeftMenuComponent', () => {
+  let component: LeftMenuComponent;
+  let fixture: ComponentFixture<LeftMenuComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ConsolePanelComponent]
+      imports: [LeftMenuComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(ConsolePanelComponent);
+    fixture = TestBed.createComponent(LeftMenuComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
