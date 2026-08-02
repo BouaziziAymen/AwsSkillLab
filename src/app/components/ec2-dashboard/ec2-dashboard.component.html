@@ -1,0 +1,77 @@
+<div class="p-6 space-y-6 text-slate-200">
+  <!-- Top Title Bar -->
+  <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div>
+      <div
+        class="text-[11px] uppercase tracking-wider text-cyan-400 font-semibold"
+      >
+        Amazon EC2
+      </div>
+      <h1 class="text-xl font-bold text-slate-100 mt-0.5">Instances</h1>
+    </div>
+    <button
+      (click)="isLaunchOpen.set(true)"
+      class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs rounded shadow transition-colors flex items-center gap-2"
+    >
+      <svg
+        class="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 4v16m8-8H4"
+        ></path>
+      </svg>
+      <span>Launch instance</span>
+    </button>
+  </div>
+
+  <!-- Action Toolbar -->
+  <div class="flex items-center gap-3">
+    <app-ec2-actions
+      [disabled]="!selectedId()"
+      (actionSelected)="handleAction($event)"
+    ></app-ec2-actions>
+  </div>
+
+  <!-- Instances Table Container -->
+  <div
+    class="border border-slate-800 rounded-lg overflow-hidden bg-slate-950/60 shadow-lg"
+  >
+    <table class="w-full text-left border-collapse text-xs">
+      <thead>
+        <tr
+          class="border-b border-slate-800 bg-slate-900/80 text-slate-400 uppercase tracking-wider font-semibold"
+        >
+          <th class="p-3 w-10 text-center">#</th>
+          <th class="p-3">Name</th>
+          <th class="p-3">Instance ID</th>
+          <th class="p-3">Instance state</th>
+          <th class="p-3">Instance type</th>
+          <th class="p-3">Status checks</th>
+          <th class="p-3">Availability zone</th>
+          <th class="p-3">Public IPv4 address</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-800">
+        <tr>
+          <td colspan="8" class="p-8 text-center text-slate-500">
+            No instances found. Click "Launch instance" to create one.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Launch Modal Dialog -->
+  @if (isLaunchOpen()) {
+    <app-ec2-launch-dialog
+      (close)="isLaunchOpen.set(false)"
+      (launched)="onInstanceLaunched($event)"
+    ></app-ec2-launch-dialog>
+  }
+</div>

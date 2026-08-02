@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './left-menu.component.html',
 })
 export class LeftMenuComponent {
-  @Input() menus: string[] = []; // Accepts the dynamic list of menus
+  @Input() menus: string[] = [];
   @Input() selectedMenu: string = '';
   @Output() menuSelected = new EventEmitter<string>();
 
