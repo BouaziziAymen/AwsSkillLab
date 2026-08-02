@@ -1,17 +1,24 @@
-<div class="p-6 space-y-6 text-slate-200">
+<div class="p-6 space-y-6 text-slate-200 w-full h-full flex flex-col">
   <!-- Top Title Bar -->
-  <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+  <div
+    class="flex items-center justify-between border-b border-slate-800 pb-4 shrink-0"
+  >
     <div>
       <div
         class="text-[11px] uppercase tracking-wider text-cyan-400 font-semibold"
       >
         Amazon EC2
       </div>
-      <h1 class="text-xl font-bold text-slate-100 mt-0.5">Instances</h1>
+      <h1 class="text-xl font-bold text-slate-100 mt-0.5">
+        Instances (<span class="text-cyan-400">{{
+          ec2Service.instances().length
+        }}</span
+        >)
+      </h1>
     </div>
     <button
       (click)="isLaunchOpen.set(true)"
-      class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs rounded shadow transition-colors flex items-center gap-2"
+      class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs rounded shadow transition-colors flex items-center gap-2 cursor-pointer"
     >
       <svg
         class="w-4 h-4"
@@ -31,16 +38,16 @@
   </div>
 
   <!-- Action Toolbar -->
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-3 shrink-0">
     <app-ec2-actions
       [disabled]="!selectedId()"
       (actionSelected)="handleAction($event)"
     ></app-ec2-actions>
   </div>
 
-  <!-- Instances Table Container -->
+  <!-- Instances Table Container (Forced display block & min-height) -->
   <div
-    class="border border-slate-800 rounded-lg overflow-hidden bg-slate-950/60 shadow-lg"
+    class="border border-slate-800 rounded-lg overflow-x-auto bg-slate-950/60 shadow-lg flex-1 min-h-[250px]"
   >
     <table class="w-full text-left border-collapse text-xs">
       <thead>
@@ -58,11 +65,56 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-800">
-        <tr>
-          <td colspan="8" class="p-8 text-center text-slate-500">
-            No instances found. Click "Launch instance" to create one.
-          </td>
-        </tr>
+        @for (instance of ec2Service.instances(); track instance.id) {
+          <tr
+            (click)="selectedId.set(instance.id)"
+            [class.bg-cyan-950]="selectedId() === instance.id"
+            class="hover:bg-slate-900/50 cursor-pointer transition-colors"
+          >
+            <td class="p-3 text-center">
+              <input
+                type="radio"
+                name="selectedInstance"
+                [checked]="selectedId() === instance.id"
+                class="accent-cyan-500 cursor-pointer"
+              />
+            </td>
+            <td class="p-3 font-medium text-slate-100">{{ instance.name }}</td>
+            <td class="p-3 font-mono text-cyan-400">{{ instance.id }}</td>
+            <td class="p-3">
+              <span
+                class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border"
+                [class.bg-emerald-950]="instance.state === 'running'"
+                [class.text-emerald-400]="instance.state === 'running'"
+                [class.border-emerald-800]="instance.state === 'running'"
+                [class.bg-amber-950]="instance.state === 'stopped'"
+                [class.text-amber-400]="instance.state === 'stopped'"
+                [class.border-amber-800]="instance.state === 'stopped'"
+              >
+                <span
+                  class="w-1.5 h-1.5 rounded-full"
+                  [class.bg-emerald-400]="instance.state === 'running'"
+                  [class.bg-amber-400]="instance.state === 'stopped'"
+                ></span>
+                {{ instance.state }}
+              </span>
+            </td>
+            <td class="p-3 font-mono text-slate-300">
+              {{ instance.instanceType }}
+            </td>
+            <td class="p-3 text-slate-400">{{ instance.statusCheck }}</td>
+            <td class="p-3 text-slate-400">{{ instance.availabilityZone }}</td>
+            <td class="p-3 font-mono text-slate-300">
+              {{ instance.publicIp }}
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="p-12 text-center text-slate-500">
+              No instances found. Click "Launch instance" to create one.
+            </td>
+          </tr>
+        }
       </tbody>
     </table>
   </div>

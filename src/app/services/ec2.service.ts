@@ -1,4 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface Ec2Instance {
   id: string;
@@ -13,58 +15,53 @@ export interface Ec2Instance {
 
 @Injectable({ providedIn: 'root' })
 export class Ec2Service {
-  // Initial sample instances mirroring real AWS Console layouts
-  private instancesSignal = signal<Ec2Instance[]>([
-    {
-      id: 'i-01a2b3c4d5e6f7g8h',
-      name: 'Prod-WebServer-01',
-      instanceType: 't3.medium',
-      state: 'running',
-      statusCheck: '2/2 checks passed',
-      availabilityZone: 'us-east-1a',
-      publicIp: '54.210.12.45',
-      privateIp: '172.31.16.88',
-    },
-    {
-      id: 'i-08h7g6f5e4d3c2b1a',
-      name: 'Dev-Worker-Node',
-      instanceType: 't3.micro',
-      state: 'stopped',
-      statusCheck: 'N/A',
-      availabilityZone: 'us-east-1b',
-      publicIp: '-',
-      privateIp: '172.31.22.104',
-    },
-  ]);
+  private http = inject(HttpClient);
 
+  // LocalEmu endpoint (e.g., LocalStack EC2 runs on localhost:4566)
+  private apiUrl = 'http://localhost:4566';
+
+  private instancesSignal = signal<Ec2Instance[]>([]);
   readonly instances = this.instancesSignal.asReadonly();
 
-  createInstance(data: { name: string; instanceType: string; ami: string }) {
-    const newInstance: Ec2Instance = {
-      id: `i-${Math.random().toString(16).substring(2, 18)}`,
-      name: data.name || 'Unnamed-Instance',
-      instanceType: data.instanceType,
-      state: 'running',
-      statusCheck: 'Initializing',
-      availabilityZone: 'us-east-1a',
-      publicIp: `54.${Math.floor(Math.random() * 200)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-      privateIp: `172.31.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-    };
+  constructor() {
+    this.loadInstances();
+  }
 
-    this.instancesSignal.update((list) => [newInstance, ...list]);
+  // Fetch instances from LocalEmu
+  loadInstances() {
+    // Note: Depending on your LocalEmu implementation, you can map standard AWS EC2 JSON responses here
+    this.http.get<any[]>(`${this.apiUrl}/instances`).subscribe({
+      next: (data) => {
+        const mapped = data.map((item) => ({
+          id: item.InstanceId,
+          name: item.Name || 'Unnamed-Instance',
+          instanceType: item.InstanceType,
+          state: item.State?.Name || 'running',
+          statusCheck: '2/2 checks passed',
+          availabilityZone: item.Placement?.AvailabilityZone || 'us-east-1a',
+          publicIp: item.PublicIpAddress || '-',
+          privateIp: item.PrivateIpAddress || '-',
+        }));
+        this.instancesSignal.set(mapped);
+      },
+      error: (err) => console.error('Failed to connect to LocalEmu:', err),
+    });
+  }
+
+  createInstance(data: { name: string; instanceType: string; ami: string }) {
+    this.http.post(`${this.apiUrl}/instances`, data).subscribe({
+      next: () => this.loadInstances(), // Refresh list after creation
+      error: (err) =>
+        console.error('Error creating instance in LocalEmu:', err),
+    });
   }
 
   setInstanceState(id: string, state: 'running' | 'stopped' | 'terminated') {
-    this.instancesSignal.update((list) =>
-      list.map((i) =>
-        i.id === id
-          ? {
-              ...i,
-              state,
-              statusCheck: state === 'running' ? '2/2 checks passed' : 'N/A',
-            }
-          : i,
-      ),
-    );
+    this.http
+      .post(`${this.apiUrl}/instances/${id}/state`, { state })
+      .subscribe({
+        next: () => this.loadInstances(), // Refresh list after modification
+        error: (err) => console.error('Error updating instance state:', err),
+      });
   }
 }

@@ -14,13 +14,13 @@
   <div class="w-2/3 flex flex-col gap-4 flex-1 min-h-0">
     <!-- Top Right: Console Component -->
     <div
-      class="flex-1 min-h-0 bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden shadow-xl flex flex-col"
+      class="flex-[3] min-h-0 bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden shadow-xl flex flex-col"
     >
       <app-console class="flex-1 w-full h-full"></app-console>
     </div>
 
     <!-- Bottom Right: Task Display Component -->
-    <div class="flex-1 min-h-0 flex flex-col">
+    <div class="flex-[1] min-h-0 flex flex-col">
       <app-task-display
         class="h-full w-full flex flex-col"
         [currentTaskTitle]="taskTitle"
