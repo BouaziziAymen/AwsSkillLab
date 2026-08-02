@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "aws-cloud-defender": {
+    "aws-skill-lab": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/aws-cloud-defender",
+            "outputPath": "dist/aws-skill-lab",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -60,10 +60,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "aws-cloud-defender:build:production"
+              "buildTarget": "aws-skill-lab:build:production"
             },
             "development": {
-              "buildTarget": "aws-cloud-defender:build:development"
+              "buildTarget": "aws-skill-lab:build:development"
             }
           },
           "defaultConfiguration": "development"
