@@ -43,18 +43,20 @@ export class Ec2Service {
         }
       }
 
-      const mapped = instances.map((item) => ({
-        id: item.InstanceId,
-        name:
-          item.Tags?.find((t: any) => t.Key === 'Name')?.Value ||
-          'Unnamed-Instance',
-        instanceType: item.InstanceType,
-        state: item.State?.Name || 'running',
-        statusCheck: '2/2 checks passed',
-        availabilityZone: item.Placement?.AvailabilityZone || 'us-east-1a',
-        publicIp: item.PublicIpAddress || '-',
-        privateIp: item.PrivateIpAddress || '-',
-      }));
+      const mapped = instances
+        .map((item) => ({
+          id: item.InstanceId,
+          name:
+            item.Tags?.find((t: any) => t.Key === 'Name')?.Value ||
+            'Unnamed-Instance',
+          instanceType: item.InstanceType,
+          state: item.State?.Name || 'running',
+          statusCheck: '2/2 checks passed',
+          availabilityZone: item.Placement?.AvailabilityZone || 'us-east-1a',
+          publicIp: item.PublicIpAddress || '-',
+          privateIp: item.PrivateIpAddress || '-',
+        }))
+        .filter((item) => item.state !== 'terminated');
 
       this.instancesSignal.set(mapped);
     } catch (err) {

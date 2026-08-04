@@ -63,3 +63,14 @@ export const AWS_SERVICES: AwsService[] = [
     ],
   },
 ];
+
+export interface Ec2Instance {
+  id: string;
+  name: string;
+  instanceType: string;
+  state: string;
+  statusCheck: string;
+  availabilityZone: string;
+  publicIp: string;
+  privateIp: string;
+}

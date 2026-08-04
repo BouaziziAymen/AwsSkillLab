@@ -2,12 +2,18 @@ import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Ec2Service } from '../../services/ec2.service';
 import { Ec2ActionsComponent } from '../ec2-actions/ec2-actions.component';
+import { Ec2ConnectDialogComponent } from '../ec2-connect-dialog/ec2-connect-dialog.component';
 import { Ec2LaunchDialogComponent } from '../ec2-launch-dialog/ec2-launch-dialog.component';
 
 @Component({
   selector: 'app-ec2-dashboard',
   standalone: true,
-  imports: [CommonModule, Ec2ActionsComponent, Ec2LaunchDialogComponent],
+  imports: [
+    CommonModule,
+    Ec2ActionsComponent,
+    Ec2LaunchDialogComponent,
+    Ec2ConnectDialogComponent,
+  ],
   templateUrl: './ec2-dashboard.component.html',
 })
 export class Ec2DashboardComponent {
@@ -15,6 +21,7 @@ export class Ec2DashboardComponent {
 
   selectedId = signal<string | null>(null);
   isLaunchOpen = signal<boolean>(false);
+  isConnectOpen = signal<boolean>(false);
 
   handleAction(action: string) {
     const id = this.selectedId();
@@ -37,5 +44,11 @@ export class Ec2DashboardComponent {
   }) {
     this.ec2Service.createInstance(instanceData);
     this.isLaunchOpen.set(false);
+  }
+
+  getSelectedInstance() {
+    const id = this.selectedId();
+    if (!id) return null;
+    return this.ec2Service.instances().find((i) => i.id === id) || null;
   }
 }

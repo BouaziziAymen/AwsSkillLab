@@ -37,15 +37,38 @@
     </button>
   </div>
 
-  <!-- Action Toolbar -->
-  <div class="flex items-center gap-3 shrink-0">
-    <app-ec2-actions
-      [disabled]="!selectedId()"
-      (actionSelected)="handleAction($event)"
-    ></app-ec2-actions>
+  <!-- Action Toolbar & Connect Button -->
+  <div class="flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-3">
+      <app-ec2-actions
+        [disabled]="!selectedId()"
+        (actionSelected)="handleAction($event)"
+      ></app-ec2-actions>
+    </div>
+
+    <button
+      [disabled]="!selectedId() || getSelectedInstance()?.state !== 'running'"
+      (click)="isConnectOpen.set(true)"
+      class="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 font-semibold text-xs rounded border border-slate-700 transition-colors flex items-center gap-2 cursor-pointer"
+    >
+      <svg
+        class="w-4 h-4 text-cyan-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        ></path>
+      </svg>
+      <span>Connect</span>
+    </button>
   </div>
 
-  <!-- Instances Table Container (Forced display block & min-height) -->
+  <!-- Instances Table Container -->
   <div
     class="border border-slate-800 rounded-lg overflow-x-auto bg-slate-950/60 shadow-lg flex-1 min-h-[250px]"
   >
@@ -54,14 +77,14 @@
         <tr
           class="border-b border-slate-800 bg-slate-900/80 text-slate-400 uppercase tracking-wider font-semibold"
         >
-          <th class="p-3 w-10 text-center">#</th>
-          <th class="p-3">Name</th>
-          <th class="p-3">Instance ID</th>
-          <th class="p-3">Instance state</th>
-          <th class="p-3">Instance type</th>
-          <th class="p-3">Status checks</th>
-          <th class="p-3">Availability zone</th>
-          <th class="p-3">Public IPv4 address</th>
+          <th class="py-2 px-3 w-10 text-center">#</th>
+          <th class="py-2 px-3 whitespace-nowrap">Name</th>
+          <th class="py-2 px-3 whitespace-nowrap">Instance ID</th>
+          <th class="py-2 px-3 whitespace-nowrap">Instance state</th>
+          <th class="py-2 px-3 whitespace-nowrap">Instance type</th>
+          <th class="py-2 px-3 whitespace-nowrap">Status checks</th>
+          <th class="py-2 px-3 whitespace-nowrap">Availability zone</th>
+          <th class="py-2 px-3 whitespace-nowrap">Public IPv4 address</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-800">
@@ -125,5 +148,14 @@
       (close)="isLaunchOpen.set(false)"
       (launched)="onInstanceLaunched($event)"
     ></app-ec2-launch-dialog>
+  }
+
+  <!-- Connect Modal Dialog Overlay -->
+  @if (isConnectOpen()) {
+    <app-ec2-connect-dialog
+      [instance]="getSelectedInstance()"
+      (close)="isConnectOpen.set(false)"
+    >
+    </app-ec2-connect-dialog>
   }
 </div>

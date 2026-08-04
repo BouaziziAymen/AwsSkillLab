@@ -1,0 +1,61 @@
+<div
+  class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+>
+  <div
+    class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-slate-200"
+  >
+    <div
+      class="flex items-center justify-between border-b border-slate-800 pb-3"
+    >
+      <h3 class="font-bold text-base text-slate-100">Connect to instance</h3>
+      <button
+        (click)="close.emit()"
+        class="text-slate-400 hover:text-slate-200 cursor-pointer"
+      >
+        ✕
+      </button>
+    </div>
+
+    @if (instance(); as inst) {
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-400">
+          Choose how you want to connect to
+          <span class="text-cyan-400 font-mono">{{ inst.id }}</span
+          >:
+        </p>
+
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-300"
+            >AWS SSM Session Manager (Recommended):</label
+          >
+          <div
+            class="bg-slate-950 p-3 rounded font-mono text-cyan-400 border border-slate-800 select-all"
+          >
+            aws --endpoint-url=http://localhost:4566 ssm start-session --target
+            {{ inst.id }}
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="font-semibold text-slate-300"
+            >SSH Client Connection:</label
+          >
+          <div
+            class="bg-slate-950 p-3 rounded font-mono text-slate-300 border border-slate-800 select-all"
+          >
+            ssh -i "your-key.pem" ec2-user&#64;{{ inst.publicIp }}
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="flex justify-end pt-2">
+      <button
+        (click)="close.emit()"
+        class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded text-xs cursor-pointer"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
