@@ -68,18 +68,41 @@ export class Ec2Service {
   async createInstance(data: {
     name: string;
     instanceType: string;
-    ami: string;
+    ami?: string;
   }) {
     try {
+      const targetAmi = data.ami || 'amzn2023';
+
       const command = new RunInstancesCommand({
-        ImageId: data.ami,
+        ImageId: targetAmi,
         InstanceType: data.instanceType as any,
         MinCount: 1,
         MaxCount: 1,
+        TagSpecifications: [
+          {
+            ResourceType: 'instance',
+            Tags: [
+              {
+                Key: 'Name',
+                Value: data.name,
+              },
+              {
+                Key: 'DockerImage',
+                Value: targetAmi,
+              },
+            ],
+          },
+        ],
       });
 
-      await this.ec2Client.send(command);
-      await this.loadInstances(); // Refresh list after creation
+      const response = await this.ec2Client.send(command);
+      const instanceId = response.Instances?.[0]?.InstanceId;
+
+      if (instanceId) {
+        await this.setInstanceState(instanceId, 'running');
+      }
+
+      await this.loadInstances();
     } catch (err) {
       console.error('Error creating instance in LocalEmu:', err);
     }
