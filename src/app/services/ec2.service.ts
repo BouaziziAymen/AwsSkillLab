@@ -63,7 +63,6 @@ export class Ec2Service {
       console.error('Failed to fetch instances from LocalEmu:', err);
     }
   }
-
   // Equivalent to: aws --endpoint-url=http://localhost:4566 ec2 run-instances ...
   async createInstance(data: {
     name: string;
@@ -73,11 +72,26 @@ export class Ec2Service {
     try {
       const targetAmi = data.ami || 'amzn2023';
 
+      // Bootstrap script using the tarball variant, which avoids systemd/rpm restrictions inside lightweight containers
+      const userDataScript = `#!/bin/bash
+cd /tmp
+curl -sO https://s3.amazonaws.com/amazon-ssm-agent/snap/linux_amd64/amazon-ssm-agent.tar.gz
+mkdir -p /var/amazon-ssm-agent
+tar -xzf amazon-ssm-agent.tar.gz -C /var/amazon-ssm-agent --strip-components=1
+
+# Launch the SSM agent in the background so it maintains the control plane handshake
+nohup /var/amazon-ssm-agent/amazon-ssm-agent > /var/log/amazon-ssm-agent.log 2>&1 &
+`;
+
+      // Base64 encode the user data for the EC2 API
+      const encodedUserData = btoa(userDataScript);
+
       const command = new RunInstancesCommand({
         ImageId: targetAmi,
         InstanceType: data.instanceType as any,
         MinCount: 1,
         MaxCount: 1,
+        UserData: encodedUserData,
         TagSpecifications: [
           {
             ResourceType: 'instance',

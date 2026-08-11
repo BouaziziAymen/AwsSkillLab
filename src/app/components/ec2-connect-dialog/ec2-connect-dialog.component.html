@@ -2,48 +2,182 @@
   class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
 >
   <div
-    class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-slate-200"
+    class="bg-slate-900 border border-slate-800 rounded-xl max-w-xl w-full p-6 space-y-4 shadow-2xl text-slate-200"
   >
     <div
       class="flex items-center justify-between border-b border-slate-800 pb-3"
     >
-      <h3 class="font-bold text-base text-slate-100">Connect to instance</h3>
+      <div>
+        <h3 class="font-bold text-base text-slate-100">Connect to instance</h3>
+        @if (instance(); as inst) {
+          <p class="text-xs font-mono text-cyan-400 mt-0.5">{{ inst.id }}</p>
+        }
+      </div>
       <button
         (click)="close.emit()"
-        class="text-slate-400 hover:text-slate-200 cursor-pointer"
+        class="text-slate-400 hover:text-slate-200 cursor-pointer text-lg"
       >
         ✕
       </button>
     </div>
 
     @if (instance(); as inst) {
-      <div class="space-y-3 text-xs">
-        <p class="text-slate-400">
-          Choose how you want to connect to
-          <span class="text-cyan-400 font-mono">{{ inst.id }}</span
-          >:
-        </p>
-
-        <div class="space-y-1">
-          <label class="font-semibold text-slate-300"
-            >AWS SSM Session Manager (Recommended):</label
+      <div class="space-y-4 text-xs">
+        <!-- AWS-style Radio / Tab Selection Bar -->
+        <div
+          class="grid grid-cols-2 gap-2 bg-slate-950/60 p-1.5 rounded-lg border border-slate-800"
+        >
+          <button
+            (click)="selectedMethod.set('ec2-instance-connect')"
+            [class.bg-slate-800]="selectedMethod() === 'ec2-instance-connect'"
+            [class.text-cyan-400]="selectedMethod() === 'ec2-instance-connect'"
+            class="px-3 py-2 rounded text-left font-medium text-slate-300 hover:bg-slate-800/50 transition-colors cursor-pointer"
           >
-          <div
-            class="bg-slate-950 p-3 rounded font-mono text-cyan-400 border border-slate-800 select-all"
+            EC2 Instance Connect
+          </button>
+          <button
+            (click)="selectedMethod.set('session-manager')"
+            [class.bg-slate-800]="selectedMethod() === 'session-manager'"
+            [class.text-cyan-400]="selectedMethod() === 'session-manager'"
+            class="px-3 py-2 rounded text-left font-medium text-slate-300 hover:bg-slate-800/50 transition-colors cursor-pointer"
           >
-            aws --endpoint-url=http://localhost:4566 ssm start-session --target
-            {{ inst.id }}
-          </div>
+            Session Manager
+          </button>
+          <button
+            (click)="selectedMethod.set('ssh')"
+            [class.bg-slate-800]="selectedMethod() === 'ssh'"
+            [class.text-cyan-400]="selectedMethod() === 'ssh'"
+            class="px-3 py-2 rounded text-left font-medium text-slate-300 hover:bg-slate-800/50 transition-colors cursor-pointer"
+          >
+            SSH client
+          </button>
+          <button
+            (click)="selectedMethod.set('serial')"
+            [class.bg-slate-800]="selectedMethod() === 'serial'"
+            [class.text-cyan-400]="selectedMethod() === 'serial'"
+            class="px-3 py-2 rounded text-left font-medium text-slate-300 hover:bg-slate-800/50 transition-colors cursor-pointer"
+          >
+            Serial console
+          </button>
         </div>
 
-        <div class="space-y-1">
-          <label class="font-semibold text-slate-300"
-            >SSH Client Connection:</label
-          >
+        <!-- OPTION 1: EC2 Instance Connect (Triggers your working terminal) -->
+        @if (selectedMethod() === "ec2-instance-connect") {
           <div
-            class="bg-slate-950 p-3 rounded font-mono text-slate-300 border border-slate-800 select-all"
+            class="space-y-3 bg-slate-950/50 p-4 rounded-lg border border-slate-800"
           >
-            ssh -i "your-key.pem" ec2-user&#64;{{ inst.publicIp }}
+            <p class="text-slate-400">
+              Connect to your instance securely using the browser-based
+              interactive shell.
+            </p>
+            <div class="space-y-1">
+              <label class="font-semibold text-slate-300 block"
+                >User name</label
+              >
+              <input
+                type="text"
+                [ngModel]="sshUser()"
+                (ngModelChange)="sshUser.set($event)"
+                class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 font-mono text-cyan-400 focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+            <div class="pt-2 flex justify-end">
+              <button
+                (click)="showTerminal.set(true)"
+                class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold px-4 py-2 rounded transition-colors cursor-pointer text-xs shadow-lg shadow-cyan-900/20"
+              >
+                Connect
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- OPTION 2: Session Manager (Triggers your working terminal) -->
+        @if (selectedMethod() === "session-manager") {
+          <div
+            class="space-y-3 bg-slate-950/50 p-4 rounded-lg border border-slate-800"
+          >
+            <p class="text-slate-400">
+              Connect using AWS Systems Manager Session Manager. Provides a
+              secure node shell without requiring open inbound ports.
+            </p>
+            <div class="pt-2 flex justify-end">
+              <button
+                (click)="showTerminal.set(true)"
+                class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold px-4 py-2 rounded transition-colors cursor-pointer text-xs"
+              >
+                Connect
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- OPTION 3: SSH Client -->
+        @if (selectedMethod() === "ssh") {
+          <div
+            class="space-y-3 bg-slate-950/50 p-4 rounded-lg border border-slate-800"
+          >
+            <p class="text-slate-400">
+              To connect to your instance using an SSH client, run the following
+              command in your local terminal:
+            </p>
+            <div
+              class="bg-slate-900 p-2.5 rounded font-mono text-xs text-cyan-400 border border-slate-800 select-all"
+            >
+              docker exec -it localemu-ec2-{{ inst.id }} sh
+            </div>
+          </div>
+        }
+
+        <!-- OPTION 4: Serial Console (Triggers your working terminal) -->
+        @if (selectedMethod() === "serial") {
+          <div
+            class="space-y-3 bg-slate-950/50 p-4 rounded-lg border border-slate-800"
+          >
+            <p class="text-slate-400">
+              The serial console provides unauthenticated text-based system log
+              and recovery access.
+            </p>
+            <div class="pt-2 flex justify-end">
+              <button
+                (click)="showTerminal.set(true)"
+                class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold px-4 py-2 rounded transition-colors cursor-pointer text-xs"
+              >
+                Connect
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Browser Preview via Host Port Mapping (Retained from your original view) -->
+        <div
+          class="space-y-2 bg-slate-950/50 p-3 rounded-lg border border-slate-800"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="font-semibold text-slate-300 block"
+                >Browser Preview (Host Port):</label
+              >
+              <p class="text-[11px] text-slate-500">
+                Preview application running inside the container.
+              </p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] text-slate-400">Port:</span>
+              <input
+                type="text"
+                [ngModel]="hostPort()"
+                (ngModelChange)="hostPort.set($event)"
+                class="w-16 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-center font-mono text-cyan-400 focus:outline-none focus:border-cyan-500"
+              />
+              <a
+                [href]="'http://localhost:' + hostPort()"
+                target="_blank"
+                class="text-[10px] bg-slate-800 hover:bg-slate-700 text-cyan-400 px-2.5 py-1 rounded transition-colors cursor-pointer border border-slate-700"
+              >
+                Open ↗
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -52,10 +186,16 @@
     <div class="flex justify-end pt-2">
       <button
         (click)="close.emit()"
-        class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded text-xs cursor-pointer"
+        class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded text-xs cursor-pointer border border-slate-700"
       >
         Close
       </button>
     </div>
   </div>
 </div>
+
+<!-- Render Terminal Modal Overlay when Triggered -->
+@if (showTerminal() && instance(); as inst) {
+  <app-ec2-terminal [instanceId]="inst.id" (close)="showTerminal.set(false)">
+  </app-ec2-terminal>
+}
