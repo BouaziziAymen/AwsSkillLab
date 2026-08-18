@@ -31,7 +31,7 @@ async def ec2_terminal_websocket(websocket: WebSocket, instance_id: str):
     try:
         exec_id = client.api.exec_create(
             container.id, 
-            cmd=["sh"], 
+            cmd=["/bin/bash", "-c", "exec /bin/bash -il"],  # <--- Forces immediate shell and prompt render
             stdin=True, 
             stdout=True, 
             stderr=True, 

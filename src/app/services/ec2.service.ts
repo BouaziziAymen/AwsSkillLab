@@ -51,10 +51,15 @@ export class Ec2Service {
             'Unnamed-Instance',
           instanceType: item.InstanceType,
           state: item.State?.Name || 'running',
-          statusCheck: '2/2 checks passed',
+          statusCheck:
+            item.State?.Name === 'running'
+              ? '2/2 checks passed'
+              : 'Initializing',
           availabilityZone: item.Placement?.AvailabilityZone || 'us-east-1a',
-          publicIp: item.PublicIpAddress || '-',
-          privateIp: item.PrivateIpAddress || '-',
+          publicIp: item.PublicIpAddress || '127.0.0.1',
+          privateIp: item.PrivateIpAddress || '172.31.0.10',
+          ami: item.ImageId || 'amzn2023',
+          launchTime: item.LaunchTime,
         }))
         .filter((item) => item.state !== 'terminated');
 
@@ -63,7 +68,7 @@ export class Ec2Service {
       console.error('Failed to fetch instances from LocalEmu:', err);
     }
   }
-  // Equivalent to: aws --endpoint-url=http://localhost:4566 ec2 run-instances ...
+
   async createInstance(data: {
     name: string;
     instanceType: string;
@@ -72,18 +77,46 @@ export class Ec2Service {
     try {
       const targetAmi = data.ami || 'amzn2023';
 
-      // Bootstrap script using the tarball variant, which avoids systemd/rpm restrictions inside lightweight containers
+      // UserData script configured to create ec2-user with bash as the default login shell
       const userDataScript = `#!/bin/bash
-cd /tmp
-curl -sO https://s3.amazonaws.com/amazon-ssm-agent/snap/linux_amd64/amazon-ssm-agent.tar.gz
-mkdir -p /var/amazon-ssm-agent
-tar -xzf amazon-ssm-agent.tar.gz -C /var/amazon-ssm-agent --strip-components=1
+export DEBIAN_FRONTEND=noninteractive
 
-# Launch the SSM agent in the background so it maintains the control plane handshake
-nohup /var/amazon-ssm-agent/amazon-ssm-agent > /var/log/amazon-ssm-agent.log 2>&1 &
+echo "=== Bootstrapping LocalEmu EC2 Instance ==="
+
+# 1. Install standard tools and sudo
+if command -v apt-get &> /dev/null; then
+  apt-get update -y && apt-get install -y sudo curl wget bash
+elif command -v yum &> /dev/null; then
+  yum install -y sudo curl wget bash
+elif command -v apk &> /dev/null; then
+  apk update && apk add sudo curl wget bash
+fi
+
+# 2. Ensure robust /usr/bin/sudo fallback wrapper exists
+if [ ! -f /usr/bin/sudo ]; then
+  cat << 'EOF' > /usr/bin/sudo
+#!/bin/bash
+exec "$@"
+EOF
+  chmod +x /usr/bin/sudo
+fi
+
+# 3. Create ec2-user with /bin/bash explicitly as the login shell and passwordless sudo
+if ! id -u ec2-user &>/dev/null; then
+  useradd -m -s /bin/bash ec2-user
+  usermod -aG sudo ec2-user 2>/dev/null || true
+  echo "ec2-user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+else
+  chsh -s /bin/bash ec2-user
+fi
+
+# 4. Force default interactive shell sessions for root and ec2-user to spin up bash
+echo "exec /bin/bash" >> /root/.bashrc
+echo "exec /bin/bash" >> /home/ec2-user/.bashrc
+
+echo "=== EC2 Bootstrap Complete ==="
 `;
 
-      // Base64 encode the user data for the EC2 API
       const encodedUserData = btoa(userDataScript);
 
       const command = new RunInstancesCommand({
@@ -92,18 +125,17 @@ nohup /var/amazon-ssm-agent/amazon-ssm-agent > /var/log/amazon-ssm-agent.log 2>&
         MinCount: 1,
         MaxCount: 1,
         UserData: encodedUserData,
+        MetadataOptions: {
+          HttpTokens: 'required',
+          HttpPutResponseHopLimit: 2,
+        },
         TagSpecifications: [
           {
             ResourceType: 'instance',
             Tags: [
-              {
-                Key: 'Name',
-                Value: data.name,
-              },
-              {
-                Key: 'DockerImage',
-                Value: targetAmi,
-              },
+              { Key: 'Name', Value: data.name },
+              { Key: 'Environment', Value: 'Development' },
+              { Key: 'ManagedBy', Value: 'LocalEmu' },
             ],
           },
         ],
@@ -138,9 +170,9 @@ nohup /var/amazon-ssm-agent/amazon-ssm-agent > /var/log/amazon-ssm-agent.log 2>&
         const command = new TerminateInstancesCommand({ InstanceIds: [id] });
         await this.ec2Client.send(command);
       }
-      await this.loadInstances(); // Refresh list after modification
+      await this.loadInstances();
     } catch (err) {
-      console.error('Error updating instance state:', err);
+      console.error(`Error updating instance ${id} state to ${state}:`, err);
     }
   }
 }
